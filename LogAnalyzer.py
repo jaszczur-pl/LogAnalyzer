@@ -12,10 +12,15 @@ flags = win32evtlog.EVENTLOG_BACKWARDS_READ | win32evtlog.EVENTLOG_SEQUENTIAL_RE
 total = win32evtlog.GetNumberOfEventLogRecords(hand)
 
 event_dictionary = {4624: "Account was successfully logged on",
-                    4647: "User initiated logoff",
                     4634: "Account was logged off",
                     4625: "Account failed to log on",
-                    4608: "Windows is starting up"}
+                    4608: "Windows is starting up",
+                    4720: "New account was created: ",
+                    4725: "Account was disabled: ",
+                    4726: "Account was deleted: ",
+                    4722: "Account was enabled: ",
+                    4740: "Account was locked out: ",
+                    4767: "Account was unlocked: "}
 
 
 def write_to_excel(matrix):
@@ -49,19 +54,24 @@ def read_events():
         events = win32evtlog.ReadEventLog(hand, flags, 0)
         if events:
             for event in events:
-                data = event.StringInserts
                 if event.EventID in event_dictionary:
-                    if event.EventID == 4624 or event.EventID == 4625:
-                        computer = data[1]
-                        user = data[5]
-                    elif event.EventID == 4647 or event.EventID == 4634:
-                        computer = data[2]
-                        user = data[1]
-                    elif event.EventID == 4608:
-                        computer = event.ComputerName
-                        user = "N/A"
+                    data = event.StringInserts
+                    computer = event.ComputerName
                     message = event_dictionary.get(event.EventID)
                     event_time = str(event.TimeGenerated)
+
+                    if event.EventID == 4624 or event.EventID == 4625:
+                        user = data[5]
+                    elif event.EventID == 4634:
+                        user = data[1]
+                    elif event.EventID == 4608:
+                        user = "N/A"
+                    elif event.EventID == 4720 or event.EventID == 4725 or event.EventID == 4726 \
+                            or event.EventID == 4722 or event.EventID == 4740 or event.EventID == 4767:
+                        user = data[4]
+                        account_name = data[0]
+                        message += account_name
+
                     single_row = [event_time, event.EventID, message, user, 'Windows Security Event Log', computer]
                     matrix.append(single_row)
                 event_no += 1
