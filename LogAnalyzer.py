@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import sys
+import os
 import csv
 import xlsxwriter
 import collections
@@ -7,9 +8,9 @@ from notify_run import Notify
 import win32evtlog
 from datetime import datetime, timedelta
 
-username = "Maciek"
-csv_file_path = "C:\\Users\\Maciek\\Desktop\\security_report.csv"
-excel_file_path = "C:\\Users\\Maciek\\Desktop\\security_report.xlsx"
+username = os.getlogin()
+csv_file_path = "C:\\Users\\%s\\Desktop\\security_report.csv" % username
+excel_file_path = "C:\\Users\\%s\\Desktop\\security_report.xlsx" % username
 workstation = "localhost"
 logtype = "Security"
 hand = win32evtlog.OpenEventLog(workstation, logtype)
@@ -140,8 +141,8 @@ def send_notification(message):
     notify.send(message)
 
 
-def calculate_date(days):
-    date = datetime.now() - timedelta(days=int(days))
+def calculate_date(days_back):
+    date = datetime.now() - timedelta(days=int(days_back))
     date = date.strftime("%Y-%m-%d %H:%M:%S")
     return date
 
@@ -178,7 +179,9 @@ def handle_critical_events(events_from_date):
 
 
 if __name__ == '__main__':
-    date_from = calculate_date(sys.argv[1])
+    days_back = sys.argv[1]
+
+    date_from = calculate_date(days_back)
     all_events, event_list, events_from_date, event_list_from_date = read_events(date_from)
 
     workbook = xlsxwriter.Workbook(excel_file_path)
